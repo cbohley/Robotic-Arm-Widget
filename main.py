@@ -27,10 +27,9 @@ from kivy.core.window import Window
 from pidev.kivy import DPEAButton
 from pidev.kivy import PauseScreen
 from time import sleep
-import RPi.GPIO as GPIO 
+import RPi.GPIO as GPIO
 from pidev.stepper import stepper
 from pidev.Cyprus_Commands import Cyprus_Commands_RPi as cyprus
-
 
 # ////////////////////////////////////////////////////////////////
 # //                      GLOBAL VARIABLES                      //
@@ -63,23 +62,29 @@ class MyApp(App):
         self.title = "Robotic Arm"
         return sm
 
+
 Builder.load_file('main.kv')
-Window.clearcolor = (.1, .1,.1, 1) # (WHITE)
+Window.clearcolor = (.1, .1, .1, 1)  # (WHITE)
 
 cyprus.open_spi()
 
+ballOnTallTower = False
 # ////////////////////////////////////////////////////////////////
 # //                    SLUSH/HARDWARE SETUP                    //
 # ////////////////////////////////////////////////////////////////
 
 sm = ScreenManager()
-arm = stepper(port = 0, speed = 10)
+arm = stepper(port=0, speed=10)
+cyprus.initialize()
+cyprus.setup_servo(1)  # cytron
+cyprus.setup_servo(2)  # talon
+
 
 # ////////////////////////////////////////////////////////////////
 # //                       MAIN FUNCTIONS                       //
 # //             SHOULD INTERACT DIRECTLY WITH HARDWARE         //
 # ////////////////////////////////////////////////////////////////
-	
+
 class MainScreen(Screen):
     version = cyprus.read_firmware_version()
     armPosition = 0
@@ -92,7 +97,7 @@ class MainScreen(Screen):
     def debounce(self):
         processInput = False
         currentTime = time.clock()
-        if ((currentTime - self.lastClick) > DEBOUNCE):
+        if (currentTime - self.lastClick) > DEBOUNCE:
             processInput = True
         self.lastClick = currentTime
         return processInput
@@ -102,7 +107,7 @@ class MainScreen(Screen):
 
     def toggleMagnet(self):
         print("Process magnet here")
-        
+
     def auto(self):
         print("Run the arm automatically here")
 
@@ -111,13 +116,13 @@ class MainScreen(Screen):
 
     def homeArm(self):
         arm.home(self.homeDirection)
-        
+
     def isBallOnTallTower(self):
         print("Determine if ball is on the top tower")
 
     def isBallOnShortTower(self):
         print("Determine if ball is on the bottom tower")
-        
+
     def initialize(self):
         print("Home arm and turn off magnet")
 
@@ -128,9 +133,9 @@ class MainScreen(Screen):
 
     def quit(self):
         MyApp().stop()
-    
-sm.add_widget(MainScreen(name = 'main'))
 
+
+sm.add_widget(MainScreen(name='main'))
 
 # ////////////////////////////////////////////////////////////////
 # //                          RUN APP                           //
