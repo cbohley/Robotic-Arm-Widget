@@ -115,40 +115,37 @@ class MainScreen(Screen):
         return processInput
 
     def toggleArm(self):
+        print("Process arm movement here")
         self.armHeight = not self.armHeight
         if self.armHeight:
-            cyprus.set_pwm_values(1, period_value=100000,
-                                  compare_value=50000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
+            cyprus.set_pwm_values(1, period_value=100000, compare_value=50000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
         else:
-            cyprus.set_pwm_values(1, period_value=100000,
-                                  compare_value=0, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
-        print("Process arm movement here")
+            cyprus.set_pwm_values(1, period_value=100000, compare_value=0, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
 
     def toggleMagnet(self):
+        print("Process magnet here")
         self.magnet = not self.magnet
         if self.magnet:
             cyprus.set_servo_position(2, 1)
         else:
             cyprus.set_servo_position(2, .5)
-        print("Process magnet here")
 
     def auto(self):
-        x = 30.25
-        y = 38.9
+        print("Run the arm automatically here")
+        shortTower = 30.25
+        tallTower = 38.9
         if self.isBallOnTallTower():
-            x = 38.9
-            y = 30.25
-
+            shortTower = 38.9
+            tallTower = 30.25
         arm.home(1)
-
-        arm.go_to_position(x)
+        arm.go_to_position(shortTower)
         self.toggleMagnet()
         time.sleep(.5)
         self.toggleArm()
         time.sleep(1)
         self.toggleArm()
         time.sleep(.5)
-        arm.go_to_position(y)
+        arm.go_to_position(tallTower)
         time.sleep(.5)
         self.toggleArm()
         time.sleep(.7)
@@ -157,8 +154,6 @@ class MainScreen(Screen):
         self.toggleArm()
         time.sleep(.5)
         arm.home(1)
-
-        print("Run the arm automatically here")
 
     def setArmPosition(self, position):
         if arm.get_position_in_units() == 0:
@@ -186,19 +181,20 @@ class MainScreen(Screen):
     def isBallOnShortTower(self):
         print("Determine if ball is on the bottom tower")
         if cyprus.read_gpio() & 0B0010:
-            print("Not here!")
+            print("Nope!")
             return False
-        print("it is")
+        print("Here")
         return True
 
 
     def initialize(self):
+        print("Home arm and turn off magnet")
         cyprus.initialize()
         cyprus.setup_servo(1)
         cyprus.setup_servo(2)
         cyprus.set_servo_position(2, .5)
+        cyprus.set_pwm_values(1, period_value=100000, compare_value=0, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
         self.homeArm()
-        print("Home arm and turn off magnet")
 
     def resetColors(self):
         self.ids.armControl.color = YELLOW
