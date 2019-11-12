@@ -87,8 +87,8 @@ Port 6: Tall Tower Sensor
 Port 7: Short Tower Sensor
 Port 8: N/A
 
-37.25 is the tall tower
-28.75 is the short tower
+38.9 is the tall tower
+30.25 is the short tower
 """
 # ////////////////////////////////////////////////////////////////
 # //                       MAIN FUNCTIONS                       //
@@ -101,7 +101,6 @@ class MainScreen(Screen):
     lastClick = time.clock()
     armHeight = False
     magnet = False
-    cyprus.initialize()
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -110,7 +109,7 @@ class MainScreen(Screen):
     def debounce(self):
         processInput = False
         currentTime = time.clock()
-        if (currentTime - self.lastClick) > DEBOUNCE:
+        if ((currentTime - self.lastClick) > DEBOUNCE):
             processInput = True
         self.lastClick = currentTime
         return processInput
@@ -126,62 +125,80 @@ class MainScreen(Screen):
         print("Process arm movement here")
 
     def toggleMagnet(self):
-        print("Process magnet here")
         self.magnet = not self.magnet
         if self.magnet:
             cyprus.set_servo_position(2, 1)
         else:
-            cyprus.set_servo_position(2, 0.5)
+            cyprus.set_servo_position(2, .5)
+        print("Process magnet here")
 
     def auto(self):
-        global ballOnTallTower
+        x = 30.25
+        y = 38.9
+        if self.isBallOnTallTower():
+            x = 38.9
+            y = 30.25
+
+        arm.home(1)
+
+        arm.go_to_position(x)
+        self.toggleMagnet()
+        time.sleep(.5)
+        self.toggleArm()
+        time.sleep(1)
+        self.toggleArm()
+        time.sleep(.5)
+        arm.go_to_position(y)
+        time.sleep(.5)
+        self.toggleArm()
+        time.sleep(.7)
+        self.toggleMagnet()
+        time.sleep(.5)
+        self.toggleArm()
+        time.sleep(.5)
+        arm.home(1)
+
         print("Run the arm automatically here")
-        self.homeArm()
-        self.isBallOnTallTower()
-        if ballOnTallTower:
-            arm.go_to_position(37.25)
-            self.toggleArm()
-            cyprus.toggleMagnet()
-            arm.go_to_position(28.75)
-            self.toggleArm()
-            cyprus.toggleMagnet()
-        else:
-            self.toggleArm()
-            arm.start_go_to_position(28.75)
-            cyprus.toggleMagnet()
-            arm.start_go_to_position(37.25)
-            self.toggleArm()
-            cyprus.toggleMagnet()
-
-
 
     def setArmPosition(self, position):
+        if arm.get_position_in_units() == 0:
+            self.ids.moveArm.value = 0
+        self.ids.armControlLabel.text = str(position)
+        arm.go_to_position(position)
+
+        print(arm.get_position_in_units())
         print("Move arm here")
 
     def homeArm(self):
-        arm.home(self.homeDirection)
+        arm.home(0)
 
     def isBallOnTallTower(self):
-        global ballOnTallTower
         print("Determine if ball is on the top tower")
-        if (cyprus.read_gpio() & 0b0001):
-            print("GPIO on port P6 is HIGH")
-            ballOnTallTower = False
-            print("The Ball is on the Short Tower" + str(ballOnTallTower))
-        else:
-            ballOnTallTower = True
-            print("The Ball is on the Tall Tower" + str(ballOnTallTower))
+        if cyprus.read_gpio() & 0b0001:
+            sleep(.05)
+            if cyprus.read_gpio() & 0b0001:
+                print("proximity sensor off")
+                return False
+
+        return True
+
 
     def isBallOnShortTower(self):
         print("Determine if ball is on the bottom tower")
+        if cyprus.read_gpio() & 0B0010:
+            print("Not here!")
+            return False
+        print("it is")
+        return True
 
 
     def initialize(self):
+        cyprus.initialize()
+        cyprus.setup_servo(1)
+        cyprus.setup_servo(2)
+        cyprus.set_servo_position(2, .5)
+        self.homeArm()
         print("Home arm and turn off magnet")
-        arm.home(1)
-        cyprus.set_pwm_values(1, period_value=100000,
-                              compare_value=50000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
-        cyprus.set_servo_position(2, 0.5)
 
     def resetColors(self):
         self.ids.armControl.color = YELLOW
