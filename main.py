@@ -86,6 +86,9 @@ Port 5: Talon
 Port 6: Tall Tower Sensor
 Port 7: Short Tower Sensor
 Port 8: N/A
+
+37.25 is the tall tower
+28.75 is the short tower
 """
 # ////////////////////////////////////////////////////////////////
 # //                       MAIN FUNCTIONS                       //
@@ -96,6 +99,9 @@ class MainScreen(Screen):
     version = cyprus.read_firmware_version()
     armPosition = 0
     lastClick = time.clock()
+    armHeight = False
+    magnet = False
+    cyprus.initialize()
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -110,13 +116,44 @@ class MainScreen(Screen):
         return processInput
 
     def toggleArm(self):
+        self.armHeight = not self.armHeight
+        if self.armHeight:
+            cyprus.set_pwm_values(1, period_value=100000,
+                                  compare_value=50000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
+        else:
+            cyprus.set_pwm_values(1, period_value=100000,
+                                  compare_value=0, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
         print("Process arm movement here")
 
     def toggleMagnet(self):
         print("Process magnet here")
+        self.magnet = not self.magnet
+        if self.magnet:
+            cyprus.set_servo_position(2, 1)
+        else:
+            cyprus.set_servo_position(2, 0.5)
 
     def auto(self):
+        global ballOnTallTower
         print("Run the arm automatically here")
+        self.homeArm()
+        self.isBallOnTallTower()
+        if ballOnTallTower:
+            arm.go_to_position(37.25)
+            self.toggleArm()
+            cyprus.toggleMagnet()
+            arm.go_to_position(28.75)
+            self.toggleArm()
+            cyprus.toggleMagnet()
+        else:
+            self.toggleArm()
+            arm.start_go_to_position(28.75)
+            cyprus.toggleMagnet()
+            arm.start_go_to_position(37.25)
+            self.toggleArm()
+            cyprus.toggleMagnet()
+
+
 
     def setArmPosition(self, position):
         print("Move arm here")
@@ -131,26 +168,20 @@ class MainScreen(Screen):
             print("GPIO on port P6 is HIGH")
             ballOnTallTower = False
             print("The Ball is on the Short Tower" + str(ballOnTallTower))
-
-
         else:
             ballOnTallTower = True
             print("The Ball is on the Tall Tower" + str(ballOnTallTower))
 
-
-
     def isBallOnShortTower(self):
-        global ballOnTallTower
         print("Determine if ball is on the bottom tower")
-        if cyprus.read_gpio() & 0b0010 == 1:
-            print("GPIO on port P7 is HIGH")
-            ballOnTallTower = False
-            print("Blah Blah Blah" + str(ballOnTallTower))
-        else:
-            ballOnTallTower = True
-            print("THE BALL IS ON THE TALL Tower" + str(ballOnTallTower))
+
+
     def initialize(self):
         print("Home arm and turn off magnet")
+        arm.home(1)
+        cyprus.set_pwm_values(1, period_value=100000,
+                              compare_value=50000, compare_mode=cyprus.LESS_THAN_OR_EQUAL)
+        cyprus.set_servo_position(2, 0.5)
 
     def resetColors(self):
         self.ids.armControl.color = YELLOW
