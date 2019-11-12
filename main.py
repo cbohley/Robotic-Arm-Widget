@@ -69,6 +69,7 @@ Window.clearcolor = (.1, .1, .1, 1)  # (WHITE)
 cyprus.open_spi()
 
 ballOnTallTower = False
+
 # ////////////////////////////////////////////////////////////////
 # //                    SLUSH/HARDWARE SETUP                    //
 # ////////////////////////////////////////////////////////////////
@@ -79,7 +80,13 @@ cyprus.initialize()
 cyprus.setup_servo(1)  # cytron
 cyprus.setup_servo(2)  # talon
 
-
+""" 
+Port 4: Cytron
+Port 5: Talon
+Port 6: Tall Tower Sensor
+Port 7: Short Tower Sensor
+Port 8: N/A
+"""
 # ////////////////////////////////////////////////////////////////
 # //                       MAIN FUNCTIONS                       //
 # //             SHOULD INTERACT DIRECTLY WITH HARDWARE         //
@@ -118,11 +125,30 @@ class MainScreen(Screen):
         arm.home(self.homeDirection)
 
     def isBallOnTallTower(self):
+        global ballOnTallTower
         print("Determine if ball is on the top tower")
+        if (cyprus.read_gpio() & 0b0001):
+            print("GPIO on port P6 is HIGH")
+            ballOnTallTower = False
+            print("The Ball is on the Short Tower" + str(ballOnTallTower))
+
+
+        else:
+            ballOnTallTower = True
+            print("The Ball is on the Tall Tower" + str(ballOnTallTower))
+
+
 
     def isBallOnShortTower(self):
+        global ballOnTallTower
         print("Determine if ball is on the bottom tower")
-
+        if cyprus.read_gpio() & 0b0010 == 1:
+            print("GPIO on port P7 is HIGH")
+            ballOnTallTower = False
+            print("Blah Blah Blah" + str(ballOnTallTower))
+        else:
+            ballOnTallTower = True
+            print("THE BALL IS ON THE TALL Tower" + str(ballOnTallTower))
     def initialize(self):
         print("Home arm and turn off magnet")
 
